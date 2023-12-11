@@ -26,7 +26,7 @@ ray.init(address=os.environ.get("ip_head"))
 
 @ray.remote(num_cpus=actor_cpus)
 def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
-    if num_threads <= 1:
+    if num_threads <= 1 or depth == 0:
         for cond_set in combinations(candidates, depth):
             if ci(x, y, cond_set):
                 return x, y
