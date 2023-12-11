@@ -25,20 +25,25 @@ else:
 ray.init(address=os.environ.get("ip_head"))
 
 
-@ray.remote(num_cpus=actor_cpus)
+@ray.remote(num_cpus=actor_cpus, max_calls=1)
 def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
+    ret_value = None
     if num_threads <= 1 or depth == 0:
         for cond_set in combinations(candidates, depth):
             if ci(x, y, cond_set):
-                return x, y
+                ret_value = x, y
+                break
     else:
-        with get_reusable_executor(max_workers=num_threads, context=get_context('loky')) as executor:
-            ind_tests = [executor.submit(ci, x, y, cond_set) for cond_set in combinations(candidates, depth)]
-            for r in as_completed(ind_tests):
-                if r.result():
-                    executor.shutdown(wait=False, kill_workers=True)
-                    return x, y
-    return None
+        try:
+            with get_reusable_executor(max_workers=num_threads, context=get_context('loky')) as executor:
+                ind_tests = [executor.submit(ci, x, y, cond_set) for cond_set in combinations(candidates, depth)]
+                for r in as_completed(ind_tests):
+                    if r.result():
+                        ret_value = x, y
+                        executor.shutdown(wait=False, kill_workers=True)
+        except:
+            pass
+    return ret_value
 
 
 class PCAlgorithm:
