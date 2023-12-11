@@ -52,11 +52,16 @@ class PCAlgorithm:
         while depth < self.causal_graph.max_degree():
             print(f'Depth {depth}')
             edges_to_remove = []
+            pairs_launched = set()
             for x in range(self.num_variables):
                 x_neighbors = set(self.causal_graph.neighbors(x))
                 if len(x_neighbors) < depth - 1:
                     continue
                 for y in x_neighbors:
+                    pair = tuple(sorted((x, y)))
+                    if pair in pairs_launched:
+                        continue
+                    pairs_launched.add(pair)
                     # banned_edge = self.check_knowledge_base(x, y)
                     edges_to_remove.append(
                         find_edges_to_remove.remote(x, y, x_neighbors - {y},
@@ -67,7 +72,7 @@ class PCAlgorithm:
             while len(edges_to_remove):
                 (done_id,), edges_to_remove = ray.wait(edges_to_remove)
                 remove_edge = ray.get(done_id)
-                print(remove_edge)
+                # print(remove_edge)
                 if remove_edge:
                     x, y = remove_edge
                     if self.causal_graph.has_edge(x, y):

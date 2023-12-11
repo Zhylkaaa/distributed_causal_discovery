@@ -63,4 +63,4 @@ for ((i = 1; i <= worker_num; i++)); do
 done
 # __doc_worker_ray_end__
 
-time PYTHONPATH=.:$PYTHONPATH python -u methods/constraint_based/pc_fine.py "$@"
+time PYTHONPATH=.:$PYTHONPATH python -u methods/constraint_based/pc.py "$@"
