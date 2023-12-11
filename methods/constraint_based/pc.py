@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import ray
 from loky import get_reusable_executor
+from loky.backend import get_context
 
 from conditional_independence.base_ci_test import BaseCITest
 from conditional_independence.d_separation import OracleCI
@@ -31,7 +32,7 @@ def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
             if ci(x, y, cond_set):
                 return x, y
     else:
-        with get_reusable_executor(max_workers=num_threads) as executor:
+        with get_reusable_executor(max_workers=num_threads, context=get_context('loky')) as executor:
             ind_tests = [executor.submit(ci, x, y, cond_set) for cond_set in combinations(candidates, depth)]
             for r in as_completed(ind_tests):
                 if r.result():
