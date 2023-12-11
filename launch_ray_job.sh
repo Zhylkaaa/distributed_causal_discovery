@@ -1,9 +1,9 @@
 #!/bin/bash
 # shellcheck disable=SC2206
-#SBATCH --job-name=test
-#SBATCH --cpus-per-task=8
-#SBATCH --mem-per-cpu=1GB
-#SBATCH --nodes=8
+#SBATCH --job-name=ray
+#SBATCH --cpus-per-task=32
+#SBATCH --mem-per-cpu=4GB
+#SBATCH --nodes=4
 #SBATCH --tasks-per-node=1
 #SBATCH --time=24:00:00
 
