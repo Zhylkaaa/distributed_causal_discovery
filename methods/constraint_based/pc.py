@@ -40,11 +40,19 @@ def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
 
 
 class PCAlgorithm:
-    def __init__(self, num_variables: int, cond_independence_test: BaseCITest, num_threads=1):
+    def __init__(self,
+                 num_variables: int,
+                 cond_independence_test: BaseCITest,
+                 num_threads=1,
+                 collection_batch=512,
+                 concurrent_tasks=1024):
         self.num_variables = num_variables
         self.ci_test = ray.put(cond_independence_test)
         self.causal_graph = CausalGraph(num_variables, is_directed=False)
         self.num_threads = num_threads
+        self.edges_to_prune = []
+        self.collection_batch = collection_batch
+        self.concurrent_tasks = concurrent_tasks
 
     def learn_skeleton(self):
         depth = 0
@@ -69,15 +77,24 @@ class PCAlgorithm:
                                                     self.ci_test,
                                                     self.num_threads)
                     )
-            while len(edges_to_remove):
-                (done_id,), edges_to_remove = ray.wait(edges_to_remove)
-                remove_edge = ray.get(done_id)
-                # print(remove_edge)
-                if remove_edge:
-                    x, y = remove_edge
-                    if self.causal_graph.has_edge(x, y):
-                        self.causal_graph.remove_edge(x, y)
+                while len(edges_to_remove) >= self.concurrent_tasks:
+                    edges_to_remove = self._wait_and_process_results(edges_to_remove, batch_size=self.collection_batch)
+
+            _ = self._wait_and_process_results(edges_to_remove, batch_size=len(edges_to_remove))
+            for x, y in self.edges_to_prune:
+                if self.causal_graph.has_edge(x, y):
+                    self.causal_graph.remove_edge(x, y)
+            self.edges_to_prune = []
             depth += 1
+
+    def _wait_and_process_results(self, awaitables, batch_size=512):
+        batch_size = min(batch_size, len(awaitables))
+        done_ids, awaitables = ray.wait(awaitables, num_returns=batch_size)
+        results = ray.get(done_ids)
+        for remove_edge in results:
+            if remove_edge:
+                self.edges_to_prune.append(remove_edge)
+        return awaitables
 
     def orient_edges(self):
         pass  # TODO
@@ -94,6 +111,3 @@ if __name__ == '__main__':
 
     pc_alg = PCAlgorithm(true_graph.number_of_nodes(), cond_independence_test=ci_test, num_threads=actor_cpus)
     pc_alg.run_discovery()
-
-    nx.draw(pc_alg.causal_graph.G)
-    plt.show()
