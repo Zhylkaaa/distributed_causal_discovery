@@ -15,12 +15,17 @@ from conditional_independence.d_separation import OracleCI
 from graph.causal_graph import CausalGraph
 
 
-assert len(sys.argv) < 4, "too many arguments"
+assert len(sys.argv) < 5, "too many arguments"
 true_graph_path = sys.argv[1]
 if len(sys.argv) == 3:
     actor_cpus = int(sys.argv[2])
+    big_actor_cpus = int(sys.argv[2])
+elif len(sys.argv) == 4:
+    actor_cpus = int(sys.argv[2])
+    big_actor_cpus = int(sys.argv[3])
 else:
     actor_cpus = 1
+    big_actor_cpus = 1
 
 ray.init(address=os.environ.get("ip_head"))
 
@@ -41,6 +46,27 @@ def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
                     ret_value = x, y
                     [r.cancel() for r in ind_tests]
                     break
+            executor.shutdown(wait=True)
+    return ret_value
+
+
+@ray.remote(num_cpus=big_actor_cpus)
+def find_edges_to_remove_big(x, y, candidates, depth, ci, num_threads=1):
+    ret_value = None
+    if num_threads <= 1 or depth == 0:
+        for cond_set in combinations(candidates, depth):
+            if ci(x, y, cond_set):
+                ret_value = x, y
+                break
+    else:
+        with get_reusable_executor(max_workers=num_threads, context=get_context('loky')) as executor:
+            ind_tests = [executor.submit(ci, x, y, cond_set) for cond_set in combinations(candidates, depth)]
+            for r in as_completed(ind_tests):
+                if r.result():
+                    ret_value = x, y
+                    [r.cancel() for r in ind_tests]
+                    break
+            executor.shutdown(wait=True)
     return ret_value
 
 
@@ -68,7 +94,7 @@ class PCAlgorithm:
             pairs_launched = set()
             for x in range(self.num_variables):
                 x_neighbors = set(self.causal_graph.neighbors(x))
-                if len(x_neighbors) < depth - 1:
+                if len(x_neighbors) - 1 < depth and depth > 0:
                     continue
                 for y in x_neighbors:
                     pair = tuple(sorted((x, y)))
@@ -76,11 +102,12 @@ class PCAlgorithm:
                         continue
                     pairs_launched.add(pair)
                     # banned_edge = self.check_knowledge_base(x, y)
+                    executable = find_edges_to_remove if depth <= 2 else find_edges_to_remove_big
                     edges_to_remove.append(
-                        find_edges_to_remove.remote(x, y, x_neighbors - {y},
-                                                    depth,
-                                                    self.ci_test,
-                                                    self.num_threads)
+                        executable.remote(x, y, x_neighbors - {y},
+                                          depth,
+                                          self.ci_test,
+                                          self.num_threads)
                     )
                 while len(edges_to_remove) >= self.concurrent_tasks:
                     edges_to_remove = self._wait_and_process_results(edges_to_remove, batch_size=self.collection_batch)
