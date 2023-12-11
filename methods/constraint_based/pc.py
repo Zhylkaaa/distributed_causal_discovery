@@ -25,7 +25,7 @@ else:
 ray.init(address=os.environ.get("ip_head"))
 
 
-@ray.remote(num_cpus=actor_cpus, max_calls=1)
+@ray.remote(num_cpus=actor_cpus)
 def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
     ret_value = None
     if num_threads <= 1 or depth == 0:
@@ -34,15 +34,13 @@ def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
                 ret_value = x, y
                 break
     else:
-        try:
-            with get_reusable_executor(max_workers=num_threads, context=get_context('loky')) as executor:
-                ind_tests = [executor.submit(ci, x, y, cond_set) for cond_set in combinations(candidates, depth)]
-                for r in as_completed(ind_tests):
-                    if r.result():
-                        ret_value = x, y
-                        executor.shutdown(wait=False, kill_workers=True)
-        except:
-            pass
+        with get_reusable_executor(max_workers=num_threads, context=get_context('loky')) as executor:
+            ind_tests = [executor.submit(ci, x, y, cond_set) for cond_set in combinations(candidates, depth)]
+            for r in as_completed(ind_tests):
+                if r.result():
+                    ret_value = x, y
+                    [r.cancel() for r in ind_tests]
+                    break
     return ret_value
 
 
