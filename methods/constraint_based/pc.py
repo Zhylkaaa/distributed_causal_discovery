@@ -1,7 +1,7 @@
 import os
 import sys
 from itertools import combinations
-from functools import partial
+from concurrent.futures import as_completed
 import pickle
 
 import matplotlib.pyplot as plt
@@ -32,10 +32,11 @@ def find_edges_to_remove(x, y, candidates, depth, ci, num_threads=1):
                 return x, y
     else:
         with get_reusable_executor(max_workers=num_threads) as executor:
-            ci_test = partial(ci, x, y)
-            ind_tests = executor.map(ci_test, combinations(candidates, depth))
-            if any(ind_tests):
-                return x, y
+            ind_tests = [executor.submit(ci, x, y, cond_set) for cond_set in combinations(candidates, depth)]
+            for r in as_completed(ind_tests):
+                if r.result():
+                    executor.shutdown()
+                    return x, y
     return None
 
 
