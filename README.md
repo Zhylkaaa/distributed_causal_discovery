@@ -15,9 +15,9 @@
 <h3 align="center">Distribted Causal Discovery</h3>
 
   <p align="center">
-    Line Following Robot implementation on Jetbot
+    Parallelized Causal Inference
     <br />
-    <a href="https://github.com/BaraaAlJorf/Jetbot_Linefollowing"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/Zhylkaaa/distributed_causal_discovery"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/Zhylkaaa/distributed_causal_discovery">View Demo</a>
@@ -56,9 +56,7 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-
-* [![Jupyter][Jupyter.com]][Jupyter-url]
-
+We provide a framework for running the Peter-Clark (PC) algorithm in a paralellized fashion
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
@@ -72,8 +70,10 @@ Clone the repo onto your jetbot
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-To use this code, simply clone the repository onto your JetBot and run the 'escape-2.ipynb' notebook. This will start the camera stream and begin processing images to follow the black lines.
-
+To use this code, simply clone the repository and run the following script - altering the parameters as necessary
+   ```sh
+   sbatch launch_ray.sh path_to_gt_graph <4> <32>
+   ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
