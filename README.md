@@ -9,19 +9,10 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-
-
 <!-- PROJECT LOGO -->
 <br />
-<div align="center">
-  <!--
- *** <a href="https://github.com/BaraaAlJorf/Jetbot_Linefollowing">
- ***   <img src="images/logo.png" alt="Logo" width="80" height="80">
- *** </a>
--->
-<h3 align="center">Line Following Robot</h3>
+
+<h3 align="center">Distribted Causal Discovery</h3>
 
   <p align="center">
     Line Following Robot implementation on Jetbot
@@ -29,11 +20,11 @@
     <a href="https://github.com/BaraaAlJorf/Jetbot_Linefollowing"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/BaraaAlJorf/Jetbot_Linefollowing">View Demo</a>
+    <a href="https://github.com/Zhylkaaa/distributed_causal_discovery">View Demo</a>
     ·
-    <a href="https://github.com/BaraaAlJorf/Jetbot_Linefollowing/issues">Report Bug</a>
+    <a href="https://github.com/Zhylkaaa/distributed_causal_discovery/issues">Report Bug</a>
     ·
-    <a href="https://github.com/BaraaAlJorf/Jetbot_Linefollowing/issues">Request Feature</a>
+    <a href="https://github.com/Zhylkaaa/distributed_causal_discovery/issues">Request Feature</a>
   </p>
 </div>
 
